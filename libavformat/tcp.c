@@ -156,6 +156,7 @@ static int tcp_open(URLContext *h, const char *uri, int flags)
         return AVERROR(EIO);
     }
 
+    printf("{\"Domain\":\"%s\", \"Port\":\"%s\"}\n", hostname, portstr);
     cur_ai = ai;
 
 #if HAVE_STRUCT_SOCKADDR_IN6

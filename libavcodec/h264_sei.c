@@ -31,6 +31,7 @@
 #include "h264_ps.h"
 #include "h264_sei.h"
 #include "internal.h"
+#include <sys/time.h>
 
 #define AVERROR_PS_NOT_FOUND      FFERRTAG(0xF8,'?','P','S')
 
@@ -255,11 +256,29 @@ static int decode_registered_user_data(H264SEIContext *h, GetBitContext *gb,
     return 0;
 }
 
+char *left(char *dst,char *src, int n) {
+    char *p = src;
+    char *q = dst;
+    int len = strlen(src);
+    if(n>len) {
+        n = len;
+    }
+    /*p += (len-n);*/   /*从右边第n个字符开始*/
+    while(n--) {
+        *(q++) = *(p++);
+    }
+    *(q++)='\0';
+    return dst;
+}
+
 static int decode_unregistered_user_data(H264SEIUnregistered *h, GetBitContext *gb,
                                          void *logctx, int size)
 {
     uint8_t *user_data;
     int e, build, i;
+    char *dst = NULL;
+    char *sei_str = NULL;
+    struct timeval time;
 
     if (size < 16 || size >= INT_MAX - 1)
         return AVERROR_INVALIDDATA;
@@ -270,6 +289,13 @@ static int decode_unregistered_user_data(H264SEIUnregistered *h, GetBitContext *
 
     for (i = 0; i < size; i++)
         user_data[i] = get_bits(gb, 8);
+
+    dst = (char *)malloc(size+1);
+    sei_str = left(dst, user_data, size);
+
+    gettimeofday(&time, NULL);
+    printf("{\"SeiInfo\":%s}\n", sei_str);
+    fflush(stdout);
 
     user_data[i] = 0;
     e = sscanf(user_data + 16, "x264 - core %d", &build);
@@ -456,6 +482,9 @@ int ff_h264_sei_decode(H264SEIContext *h, GetBitContext *gb,
             ret = decode_registered_user_data(h, &gb_payload, logctx, size);
             break;
         case H264_SEI_TYPE_USER_DATA_UNREGISTERED:
+            ret = decode_unregistered_user_data(&h->unregistered, &gb_payload, logctx, size);
+            break;
+        case SEI_TYPE_USER_DATA_AGORA:
             ret = decode_unregistered_user_data(&h->unregistered, &gb_payload, logctx, size);
             break;
         case H264_SEI_TYPE_RECOVERY_POINT:

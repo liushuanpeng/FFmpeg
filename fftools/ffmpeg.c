@@ -4817,6 +4817,7 @@ int main(int argc, char **argv)
     int i, ret;
     BenchmarkTimeStamps ti;
 
+    printf("main begin\n");
     init_dynload();
 
     register_exit(ffmpeg_cleanup);

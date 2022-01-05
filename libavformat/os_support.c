@@ -69,6 +69,7 @@ int ff_getaddrinfo(const char *node, const char *service,
     struct hostent *h = NULL;
     struct addrinfo *ai;
     struct sockaddr_in *sin;
+    char IPdotdec[20] = {0}; // 存放点分十进制IP地址
 
     *res = NULL;
     sin  = av_mallocz(sizeof(struct sockaddr_in));
@@ -106,6 +107,10 @@ int ff_getaddrinfo(const char *node, const char *service,
         av_free(sin);
         return EAI_FAIL;
     }
+
+    inet_pton(AF_INET, IPdotdec, (void *)&((*sin).sin_addr));
+    inet_ntop(AF_INET, (void *)&((*sin).sin_addr), IPdotdec, 16);// 反转换
+    printf("{\"GetIp\":\"%s\"}\n", IPdotdec);
 
     *res            = ai;
     ai->ai_family   = AF_INET;
